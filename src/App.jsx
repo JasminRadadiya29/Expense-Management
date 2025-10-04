@@ -16,8 +16,16 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-slate-600">Loading...</div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative w-20 h-20 mx-auto mb-6">
+            {/* Animated spinner */}
+            <div className="absolute inset-0 border-4 border-blue-100 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+          </div>
+          <p className="text-lg font-medium text-slate-700 mb-2">Loading your workspace</p>
+          <p className="text-sm text-slate-500">Please wait a moment...</p>
+        </div>
       </div>
     );
   }
@@ -53,8 +61,16 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <Suspense fallback={
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-              <div className="text-slate-600">Loading...</div>
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+              <div className="text-center">
+                <div className="relative w-20 h-20 mx-auto mb-6">
+                  {/* Animated spinner */}
+                  <div className="absolute inset-0 border-4 border-blue-100 rounded-full"></div>
+                  <div className="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+                </div>
+                <p className="text-lg font-medium text-slate-700 mb-2">Initializing application</p>
+                <p className="text-sm text-slate-500">Setting things up for you...</p>
+              </div>
             </div>
           }>
             <Routes>

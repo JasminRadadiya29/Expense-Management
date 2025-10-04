@@ -27,56 +27,78 @@ class ErrorBoundary extends Component {
       }
 
       return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
-          <div className="max-w-md w-full bg-white rounded-lg shadow-sm border border-slate-200 p-8 text-center">
-            <div className="flex justify-center mb-4">
-              <AlertTriangle className="h-12 w-12 text-red-500" />
-            </div>
-            
-            <h1 className="text-xl font-semibold text-slate-900 mb-2">
-              Something went wrong
-            </h1>
-            
-            <p className="text-slate-600 mb-6">
-              We're sorry, but something unexpected happened. Please try refreshing the page.
-            </p>
-            
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <details className="mb-6 text-left">
-                <summary className="cursor-pointer text-sm text-slate-500 hover:text-slate-700">
-                  Error Details (Development)
-                </summary>
-                <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded text-xs text-red-700 font-mono">
-                  <div className="mb-2">
-                    <strong>Error:</strong> {this.state.error.message}
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center px-4 py-8">
+          <div className="max-w-lg w-full">
+            {/* Error Card */}
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-200/60 overflow-hidden">
+              {/* Header with gradient */}
+              <div className="bg-gradient-to-r from-red-500 to-rose-500 px-8 py-6">
+                <div className="flex items-center justify-center">
+                  <div className="bg-white rounded-full p-3 shadow-lg">
+                    <AlertTriangle className="h-8 w-8 text-red-500" />
                   </div>
-                  {this.state.errorInfo && (
-                    <div>
-                      <strong>Stack:</strong>
-                      <pre className="mt-1 whitespace-pre-wrap">
-                        {this.state.errorInfo.componentStack}
-                      </pre>
-                    </div>
-                  )}
                 </div>
-              </details>
-            )}
-            
-            <div className="flex gap-3 justify-center">
-              <button
-                onClick={this.handleRetry}
-                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-              >
-                <RefreshCw size={16} />
-                Try Again
-              </button>
-              
-              <button
-                onClick={() => window.location.reload()}
-                className="px-4 py-2 border border-slate-300 rounded hover:bg-slate-50 transition"
-              >
-                Refresh Page
-              </button>
+              </div>
+
+              {/* Content */}
+              <div className="px-8 py-8 text-center">
+                <h1 className="text-2xl font-bold text-slate-800 mb-3">
+                  Oops! Something went wrong
+                </h1>
+                
+                <p className="text-slate-600 leading-relaxed mb-8">
+                  We encountered an unexpected error. Don't worry, your data is safe. Please try again or refresh the page.
+                </p>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
+                  <button
+                    onClick={this.handleRetry}
+                    className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-200 shadow-lg shadow-blue-500/30"
+                  >
+                    <RefreshCw size={18} />
+                    Try Again
+                  </button>
+                  
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="px-6 py-3 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transform hover:scale-105 transition-all duration-200 border border-slate-200"
+                  >
+                    Refresh Page
+                  </button>
+                </div>
+
+                {/* Development Error Details */}
+                {process.env.NODE_ENV === 'development' && this.state.error && (
+                  <details className="text-left group">
+                    <summary className="cursor-pointer text-sm text-slate-500 hover:text-slate-700 font-medium py-2 px-4 bg-slate-50 rounded-lg inline-flex items-center gap-2 transition-colors">
+                      <span className="transform group-open:rotate-90 transition-transform">▶</span>
+                      Error Details (Development)
+                    </summary>
+                    <div className="mt-4 p-4 bg-red-50/80 border border-red-200 rounded-xl text-xs text-red-800 font-mono backdrop-blur-sm">
+                      <div className="mb-3 pb-3 border-b border-red-200">
+                        <strong className="text-red-900 text-sm">Error Message:</strong>
+                        <div className="mt-1 text-red-700">{this.state.error.message}</div>
+                      </div>
+                      {this.state.errorInfo && (
+                        <div>
+                          <strong className="text-red-900 text-sm">Component Stack:</strong>
+                          <pre className="mt-2 whitespace-pre-wrap text-red-700 leading-relaxed max-h-48 overflow-auto">
+                            {this.state.errorInfo.componentStack}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  </details>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="bg-slate-50 px-8 py-4 border-t border-slate-200/60">
+                <p className="text-xs text-slate-500 text-center">
+                  If this problem persists, please contact support
+                </p>
+              </div>
             </div>
           </div>
         </div>

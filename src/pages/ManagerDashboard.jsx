@@ -1,42 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import api from '../services/api';
 import { Check, X, DollarSign, Clock, CheckCircle, FileText, User, Calendar, CreditCard, MessageSquare, TrendingUp } from 'lucide-react';
-
-// Mock API for demo
-const api = {
-  get: async () => ({
-    data: {
-      approvals: [
-        {
-          _id: '1',
-          status: 'Pending',
-          expense: {
-            employee: { name: 'Sarah Johnson' },
-            description: 'Client Lunch Meeting',
-            category: 'Food',
-            amount: 125.50,
-            currency: 'USD',
-            paidBy: 'Personal',
-            remarks: 'Met with potential client to discuss Q4 strategy'
-          }
-        },
-        {
-          _id: '2',
-          status: 'Pending',
-          expense: {
-            employee: { name: 'Michael Brown' },
-            description: 'Flight to NYC',
-            category: 'Travel',
-            amount: 450,
-            currency: 'USD',
-            paidBy: 'Company',
-            remarks: ''
-          }
-        }
-      ]
-    }
-  }),
-  post: async () => ({ data: {} })
-};
 
 const ManagerDashboard = () => {
   const [approvals, setApprovals] = useState([]);
@@ -123,7 +87,7 @@ const ManagerDashboard = () => {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">Approved Today</p>
-                <p className="text-4xl font-bold text-slate-900 mb-3">5</p>
+                <p className="text-4xl font-bold text-slate-900 mb-3">{approvals.filter(a => a.status === 'Approved').length}</p>
                 <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-600">
                   <TrendingUp className="w-4 h-4" />
                   <span>Processed</span>
@@ -139,7 +103,7 @@ const ManagerDashboard = () => {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">Total Amount</p>
-                <p className="text-4xl font-bold text-slate-900 mb-3">${totalAmount.toFixed(2)}</p>
+                <p className="text-4xl font-bold text-slate-900 mb-3">{totalAmount.toFixed(2)}</p>
                 <div className="flex items-center gap-1.5 text-sm font-semibold text-blue-600">
                   <span>Pending value</span>
                 </div>
@@ -189,7 +153,7 @@ const ManagerDashboard = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">
-                      ${approval.expense.amount.toFixed(2)} {approval.expense.currency}
+                      {approval.expense.amount.toFixed(2)} {approval.expense.currency}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 bg-amber-100 text-amber-700 border-amber-200">

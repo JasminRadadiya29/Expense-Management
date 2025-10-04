@@ -19,15 +19,15 @@ const LoadingSpinner = ({
   };
 
   return (
-    <div className={flex items-center justify-center gap-3 ${className}}>
+    <div className={`flex items-center justify-center gap-3 ${className}`}>
       <div className="relative">
         {/* Outer glow ring */}
-        <div className={absolute inset-0 ${sizeClasses[size]} rounded-full bg-blue-400/20 blur-sm animate-pulse}></div>
+        <div className={`absolute inset-0 ${sizeClasses[size]} rounded-full bg-blue-400/20 blur-sm animate-pulse`}></div>
         {/* Spinning loader */}
-        <Loader2 className={relative ${sizeClasses[size]} text-blue-600 animate-spin} />
+        <Loader2 className={`relative ${sizeClasses[size]} text-blue-600 animate-spin`} />
       </div>
       {text && (
-        <span className={font-medium text-slate-700 ${textSizeClasses[size]}}>
+        <span className={`font-medium text-slate-700 ${textSizeClasses[size]}`}>
           {text}
         </span>
       )}

@@ -1,27 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import api from '../services/api';
 import { Plus, Upload, Eye, Calendar, DollarSign, Clock, TrendingUp, X, FileText, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
-
-// Mock for demo
-const useAuth = () => ({ 
-  user: { 
-    name: 'John Smith', 
-    currency: 'USD',
-    company: { baseCurrency: 'USD' }
-  } 
-});
-
-const api = {
-  get: async () => ({
-    data: {
-      expenses: [
-        { _id: '1', description: 'Client Lunch Meeting', date: '2025-10-01', category: 'Food', paidBy: 'Personal', amount: 125.50, currency: 'USD', amountInBaseCurrency: 125.50, status: 'Approved' },
-        { _id: '2', description: 'Flight to NYC', date: '2025-10-02', category: 'Travel', paidBy: 'Personal', amount: 450, currency: 'USD', amountInBaseCurrency: 450, status: 'Waiting Approval' },
-        { _id: '3', description: 'Office Supplies', date: '2025-10-03', category: 'Office Supplies', paidBy: 'Company', amount: 89.99, currency: 'USD', amountInBaseCurrency: 89.99, status: 'Draft' }
-      ]
-    }
-  }),
-  post: async () => ({ data: { expense: { _id: '4' } } })
-};
 
 const EmployeeExpenses = () => {
   const { user } = useAuth();
@@ -61,13 +41,12 @@ const EmployeeExpenses = () => {
     setOcrLoading(true);
     setUploadedFile(file);
     
+    // Simulate OCR processing
     setTimeout(() => {
-      setFormData(prev => ({ 
-        ...prev, 
-        amount: '125.50',
-        date: '2025-10-04'
-      }));
+      // In a real implementation, this would call an OCR service
+      // For now, we'll just simulate the loading state
       setOcrLoading(false);
+      // You can add actual OCR integration here
     }, 2000);
   };
 
@@ -156,7 +135,7 @@ const EmployeeExpenses = () => {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">Total Expenses</p>
-                <p className="text-4xl font-bold text-slate-900 mb-3">${totalExpenses.toFixed(2)}</p>
+                <p className="text-4xl font-bold text-slate-900 mb-3">{totalExpenses.toFixed(2)}</p>
                 <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-600">
                   <span>All time</span>
                 </div>
@@ -201,7 +180,7 @@ const EmployeeExpenses = () => {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">This Month</p>
-                <p className="text-4xl font-bold text-slate-900 mb-3">${totalExpenses.toFixed(2)}</p>
+                <p className="text-4xl font-bold text-slate-900 mb-3">{totalExpenses.toFixed(2)}</p>
                 <div className="flex items-center gap-1.5 text-sm font-semibold text-blue-600">
                   <span>October 2025</span>
                 </div>
@@ -252,7 +231,7 @@ const EmployeeExpenses = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-bold text-slate-900">
-                        ${expense.amount.toFixed(2)} {expense.currency}
+                        {expense.amount.toFixed(2)} {expense.currency}
                       </div>
                       {expense.currency !== user?.company.baseCurrency && (
                         <div className="text-xs text-slate-500 font-medium">
