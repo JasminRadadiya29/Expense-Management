@@ -1,36 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Mail, Plus, TrendingUp, X, Search } from 'lucide-react';
-
-// Mock API and email services for demo
-const api = {
-  get: async (url) => {
-    if (url === '/users') {
-      return { data: { users: [
-        { _id: '1', name: 'John Smith', email: 'john@company.com', role: 'Manager', manager: null },
-        { _id: '2', name: 'Sarah Johnson', email: 'sarah@company.com', role: 'Employee', manager: { _id: '1', name: 'John Smith' } },
-        { _id: '3', name: 'Michael Brown', email: 'michael@company.com', role: 'Employee', manager: { _id: '1', name: 'John Smith' } },
-      ]}};
-    }
-    if (url === '/users/managers') {
-      return { data: { managers: [
-        { _id: '1', name: 'John Smith', email: 'john@company.com', role: 'Manager' }
-      ]}};
-    }
-  },
-  post: async (url, data) => {
-    return { data: { email: data.email, userName: data.name, temporaryPassword: 'temp123' } };
-  },
-  put: async () => ({ data: {} })
-};
-
-const sendWelcomeEmail = async () => true;
-const sendPasswordResetEmail = async () => true;
+import api from '../services/api';
+import { sendWelcomeEmail, sendPasswordResetEmail } from '../services/emailService';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [managers, setManagers] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
@@ -42,25 +20,39 @@ const AdminDashboard = () => {
   });
 
   useEffect(() => {
-    fetchUsers();
-    fetchManagers();
+    const loadData = async () => {
+      setDataLoading(true);
+      try {
+        await Promise.all([fetchUsers(), fetchManagers()]);
+      } finally {
+        setDataLoading(false);
+      }
+    };
+    loadData();
   }, []);
 
   const fetchUsers = async () => {
     try {
+      console.log('Fetching users...');
       const response = await api.get('/users');
-      setUsers(response.data.users);
+      console.log('Users response:', response.data);
+      setUsers(response.data.users || []);
     } catch (err) {
       console.error('Error fetching users:', err);
+      setError('Failed to fetch users');
+      setUsers([]);
     }
   };
 
   const fetchManagers = async () => {
     try {
+      console.log('Fetching managers...');
       const response = await api.get('/users/managers');
-      setManagers(response.data.managers);
+      console.log('Managers response:', response.data);
+      setManagers(response.data.managers || []);
     } catch (err) {
       console.error('Error fetching managers:', err);
+      setManagers([]);
     }
   };
 
@@ -72,6 +64,7 @@ const AdminDashboard = () => {
     try {
       const response = await api.post('/users', formData);
       
+      // Send welcome email using EmailJS
       const emailSent = await sendWelcomeEmail(
         response.data.email,
         response.data.userName,
@@ -101,6 +94,7 @@ const AdminDashboard = () => {
     try {
       const response = await api.post(`/users/${userId}/reset-password`);
       
+      // Send password reset email using EmailJS
       const emailSent = await sendPasswordResetEmail(
         response.data.email,
         response.data.temporaryPassword
@@ -167,12 +161,35 @@ const AdminDashboard = () => {
           </button>
         </div>
 
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-xl flex items-start gap-3">
+            <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-white text-xs font-bold">!</span>
+            </div>
+            <div>
+              <p className="text-red-700 text-sm font-medium">{error}</p>
+              <button 
+                onClick={() => {
+                  setError('');
+                  fetchUsers();
+                  fetchManagers();
+                }}
+                className="text-red-600 text-xs underline hover:no-underline mt-1"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200/80 p-6 transition-all duration-300 hover:-translate-y-1">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">Total Users</p>
-                <p className="text-4xl font-bold text-slate-900 mb-3">{users.length}</p>
+                <p className="text-4xl font-bold text-slate-900 mb-3">
+                  {dataLoading ? '...' : users.length}
+                </p>
                 <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-600">
                   <TrendingUp className="w-4 h-4" />
                   <span>Active accounts</span>
@@ -188,7 +205,9 @@ const AdminDashboard = () => {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">Managers</p>
-                <p className="text-4xl font-bold text-slate-900 mb-3">{managers.length}</p>
+                <p className="text-4xl font-bold text-slate-900 mb-3">
+                  {dataLoading ? '...' : managers.length}
+                </p>
                 <div className="flex items-center gap-1.5 text-sm font-semibold text-blue-600">
                   <span>Team leaders</span>
                 </div>
@@ -203,7 +222,9 @@ const AdminDashboard = () => {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">Employees</p>
-                <p className="text-4xl font-bold text-slate-900 mb-3">{users.filter(u => u.role === 'Employee').length}</p>
+                <p className="text-4xl font-bold text-slate-900 mb-3">
+                  {dataLoading ? '...' : users.filter(u => u.role === 'Employee').length}
+                </p>
                 <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-600">
                   <span>Team members</span>
                 </div>
