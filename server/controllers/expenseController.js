@@ -27,7 +27,10 @@ export const createExpense = async (req, res) => {
     res.status(201).json({ expense: populatedExpense });
   } catch (error) {
     console.error('Create expense error:', error);
-    res.status(500).json({ error: 'Error creating expense' });
+    res.status(500).json({ 
+      error: 'Error creating expense',
+      message: error.message
+     });
   }
 };
 

@@ -10,12 +10,17 @@ const EmployeeExpenses = () => {
   const [loading, setLoading] = useState(false);
   const [ocrLoading, setOcrLoading] = useState(false);
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [convertedAmount, setConvertedAmount] = useState(null);
+  const [conversionLoading, setConversionLoading] = useState(false);
+  const [conversionError, setConversionError] = useState(null);
+  const [exchangeRate, setExchangeRate] = useState(null);
   const [formData, setFormData] = useState({
     description: '',
     category: 'Travel',
     date: new Date().toISOString().split('T')[0],
     amount: '',
     currency: user?.currency || 'USD',
+    amountInBaseCurrency: '',
     paidBy: 'Personal',
     remarks: '',
     receiptUrl: ''
@@ -25,12 +30,86 @@ const EmployeeExpenses = () => {
     fetchExpenses();
   }, []);
 
+  useEffect(() => {
+    // Auto-convert when amount or currency changes
+    if (formData.amount && formData.currency && user?.company?.baseCurrency) {
+      if (formData.currency === user.company.baseCurrency) {
+        // No conversion needed
+        const amount = parseFloat(formData.amount);
+        setFormData(prev => ({
+          ...prev,
+          amountInBaseCurrency: amount
+        }));
+        setConvertedAmount(amount);
+        setExchangeRate(1);
+        setConversionError(null);
+      } else {
+        // Convert currency
+        convertCurrency(formData.amount, formData.currency, user.company.baseCurrency);
+      }
+    }
+  }, [formData.amount, formData.currency]);
+
   const fetchExpenses = async () => {
     try {
       const response = await api.get('/expenses');
       setExpenses(response.data.expenses);
     } catch (err) {
       console.error('Error fetching expenses:', err);
+    }
+  };
+
+  const convertCurrency = async (amount, fromCurrency, toCurrency) => {
+    if (!amount || amount <= 0) {
+      setConvertedAmount(null);
+      setExchangeRate(null);
+      return;
+    }
+
+    setConversionLoading(true);
+    setConversionError(null);
+    
+    try {
+      // Fetch exchange rates from ExchangeRate API
+      const response = await fetch(`https://api.exchangerate-api.com/v4/latest/${fromCurrency}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch exchange rates');
+      }
+
+      const data = await response.json();
+      
+      // Get the rate for the target currency
+      const rate = data.rates[toCurrency];
+      
+      if (!rate) {
+        throw new Error(`Exchange rate not found for ${toCurrency}`);
+      }
+
+      // Calculate converted amount
+      const convertedValue = parseFloat(amount) * rate;
+      
+      setExchangeRate(rate);
+      setConvertedAmount(convertedValue);
+      
+      setFormData(prev => ({
+        ...prev,
+        amountInBaseCurrency: convertedValue
+      }));
+    } catch (err) {
+      console.error('Currency conversion error:', err);
+      setConversionError(err.message);
+      
+      // Fallback: use the same amount if conversion fails
+      const fallbackAmount = parseFloat(amount);
+      setConvertedAmount(fallbackAmount);
+      setExchangeRate(1);
+      setFormData(prev => ({
+        ...prev,
+        amountInBaseCurrency: fallbackAmount
+      }));
+    } finally {
+      setConversionLoading(false);
     }
   };
 
@@ -43,22 +122,40 @@ const EmployeeExpenses = () => {
     
     // Simulate OCR processing
     setTimeout(() => {
-      // In a real implementation, this would call an OCR service
-      // For now, we'll just simulate the loading state
       setOcrLoading(false);
-      // You can add actual OCR integration here
     }, 2000);
   };
 
   const handleSubmit = async (e, submit = false) => {
     e.preventDefault();
+    
+    // Validation
+    if (!formData.amountInBaseCurrency) {
+      alert('Please wait for currency conversion to complete');
+      return;
+    }
+
+    if (conversionError) {
+      alert('Currency conversion failed. Please check your currency code and try again.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const response = await api.post('/expenses', {
-        ...formData,
-        amount: parseFloat(formData.amount)
-      });
+      const expenseData = {
+        description: formData.description,
+        category: formData.category,
+        date: formData.date,
+        amount: parseFloat(formData.amount),
+        currency: formData.currency,
+        amountInBaseCurrency: parseFloat(formData.amountInBaseCurrency),
+        paidBy: formData.paidBy,
+        remarks: formData.remarks,
+        receiptUrl: formData.receiptUrl
+      };
+
+      const response = await api.post('/expenses', expenseData);
 
       if (submit) {
         await api.post(`/expenses/${response.data.expense._id}/submit`);
@@ -71,11 +168,15 @@ const EmployeeExpenses = () => {
         date: new Date().toISOString().split('T')[0],
         amount: '',
         currency: user?.currency || 'USD',
+        amountInBaseCurrency: '',
         paidBy: 'Personal',
         remarks: '',
         receiptUrl: ''
       });
       setUploadedFile(null);
+      setConvertedAmount(null);
+      setExchangeRate(null);
+      setConversionError(null);
       fetchExpenses();
     } catch (err) {
       alert(err.response?.data?.error || 'Error creating expense');
@@ -107,16 +208,17 @@ const EmployeeExpenses = () => {
     return colors[category] || colors['Other'];
   };
 
-  const totalExpenses = expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
+  // FIXED: Calculate total using amountInBaseCurrency instead of amount
+  const totalExpenses = expenses.reduce((sum, exp) => sum + (exp.amountInBaseCurrency || 0), 0);
   const pendingExpenses = expenses.filter(e => e.status === 'Waiting Approval').length;
   const approvedExpenses = expenses.filter(e => e.status === 'Approved').length;
 
   return (
-    <div className="min-h-screen  bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent mb-2">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
               My Expenses
             </h1>
             <p className="text-slate-600 text-lg">Submit and track your expense reports</p>
@@ -130,14 +232,14 @@ const EmployeeExpenses = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200/80 p-6 transition-all duration-300 hover:-translate-y-1">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">Total Expenses</p>
                 <p className="text-4xl font-bold text-slate-900 mb-3">{totalExpenses.toFixed(2)}</p>
                 <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-600">
-                  <span>All time</span>
+                  <span>All time ({user?.company?.baseCurrency})</span>
                 </div>
               </div>
               <div className="p-4 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
@@ -175,8 +277,6 @@ const EmployeeExpenses = () => {
               </div>
             </div>
           </div>
-
-          
         </div>
 
         <div className="bg-white rounded-2xl shadow-md border border-slate-200/80 overflow-hidden">
@@ -220,9 +320,9 @@ const EmployeeExpenses = () => {
                       <div className="text-sm font-bold text-slate-900">
                         {expense.amount.toFixed(2)} {expense.currency}
                       </div>
-                      {expense.currency !== user?.company.baseCurrency && (
+                      {expense.currency !== user?.company?.baseCurrency && (
                         <div className="text-xs text-slate-500 font-medium">
-                          ({expense.amountInBaseCurrency.toFixed(2)} {user?.company.baseCurrency})
+                          ({expense.amountInBaseCurrency.toFixed(2)} {user?.company?.baseCurrency})
                         </div>
                       )}
                     </td>
@@ -253,7 +353,7 @@ const EmployeeExpenses = () => {
           <div className="bg-white rounded-3xl max-w-3xl w-full shadow-2xl my-8 max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white z-10 flex items-center justify-between p-8 border-b border-slate-200 rounded-t-3xl">
               <div>
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-blue-900 bg-clip-text text-transparent">
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                   Create Expense
                 </h2>
                 <p className="text-slate-600 mt-1">Add a new expense to your report</p>
@@ -262,6 +362,9 @@ const EmployeeExpenses = () => {
                 onClick={() => {
                   setShowModal(false);
                   setUploadedFile(null);
+                  setConvertedAmount(null);
+                  setExchangeRate(null);
+                  setConversionError(null);
                 }}
                 className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
               >
@@ -380,7 +483,7 @@ const EmployeeExpenses = () => {
                       value={formData.amount}
                       onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                       required
-                      className="w-full pl-8 pr-4 py-3.5 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-bold text-slate-900"
+                      className="w-full pl-4 pr-4 py-3.5 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-bold text-slate-900"
                       placeholder="0.00"
                     />
                   </div>
@@ -393,12 +496,56 @@ const EmployeeExpenses = () => {
                   <input
                     type="text"
                     value={formData.currency}
-                    onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                    className="w-full px-4 py-3.5 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium text-slate-900"
+                    onChange={(e) => setFormData({ ...formData, currency: e.target.value.toUpperCase() })}
+                    className="w-full px-4 py-3.5 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium text-slate-900 uppercase"
                     placeholder="USD"
+                    maxLength={3}
                   />
                 </div>
               </div>
+
+              {/* Currency Conversion Display */}
+              {formData.amount && formData.currency && user?.company?.baseCurrency && formData.currency !== user.company.baseCurrency && (
+                <div className={`rounded-xl p-4 border-2 ${
+                  conversionError 
+                    ? 'bg-red-50 border-red-200' 
+                    : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {conversionError ? (
+                        <AlertCircle className="w-5 h-5 text-red-600" />
+                      ) : (
+                        <DollarSign className="w-5 h-5 text-blue-600" />
+                      )}
+                      <span className="text-sm font-bold text-slate-700">
+                        {conversionError ? 'Conversion Error' : 'Converted Amount:'}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      {conversionLoading ? (
+                        <div className="flex items-center gap-2">
+                          <Loader2 size={16} className="text-blue-600 animate-spin" />
+                          <span className="text-sm text-slate-600">Converting...</span>
+                        </div>
+                      ) : conversionError ? (
+                        <div className="text-xs text-red-600 font-medium">
+                          {conversionError}
+                        </div>
+                      ) : convertedAmount ? (
+                        <div>
+                          <span className="text-lg font-bold text-blue-700">
+                            {convertedAmount.toFixed(2)} {user?.company?.baseCurrency}
+                          </span>
+                          <div className="text-xs text-slate-600">
+                            From {formData.amount} {formData.currency} (Rate: {exchangeRate?.toFixed(4)})
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">
@@ -428,14 +575,14 @@ const EmployeeExpenses = () => {
               <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-slate-200">
                 <button
                   onClick={(e) => handleSubmit(e, false)}
-                  disabled={loading}
+                  disabled={loading || conversionLoading}
                   className="flex-1 bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white py-3.5 px-6 rounded-xl font-bold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:scale-105"
                 >
                   {loading ? 'Saving...' : 'Save as Draft'}
                 </button>
                 <button
                   onClick={(e) => handleSubmit(e, true)}
-                  disabled={loading}
+                  disabled={loading || conversionLoading}
                   className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3.5 px-6 rounded-xl font-bold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/30 hover:shadow-xl hover:scale-105"
                 >
                   {loading ? 'Submitting...' : 'Submit for Approval'}
@@ -444,6 +591,9 @@ const EmployeeExpenses = () => {
                   onClick={() => {
                     setShowModal(false);
                     setUploadedFile(null);
+                    setConvertedAmount(null);
+                    setExchangeRate(null);
+                    setConversionError(null);
                   }}
                   className="px-8 py-3.5 border-2 border-slate-300 rounded-xl font-bold hover:bg-slate-50 hover:border-slate-400 transition-all text-slate-700 hover:scale-105"
                 >
@@ -458,4 +608,4 @@ const EmployeeExpenses = () => {
   );
 };
 
-export default EmployeeExpenses;
+export default EmployeeExpenses
