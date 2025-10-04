@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
+import { sendPasswordResetEmail } from '../services/emailService';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -21,8 +22,13 @@ const Login = () => {
     setLoading(true);
 
     try {
-      await login(email, password);
-      navigate('/dashboard');
+      const user = await login(email, password);
+      // Check if user has temporary password
+      if (user.isTemporaryPassword) {
+        navigate('/change-password');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed');
     } finally {
@@ -37,8 +43,20 @@ const Login = () => {
     setLoading(true);
 
     try {
-      await api.post('/auth/forgot-password', { email: resetEmail });
-      setResetMessage('Temporary password sent to your email');
+      const response = await api.post('/auth/forgot-password', { email: resetEmail });
+      
+      // Send email using EmailJS
+      const emailSent = await sendPasswordResetEmail(
+        response.data.email, 
+        response.data.temporaryPassword
+      );
+      
+      if (emailSent) {
+        setResetMessage('Temporary password sent to your email');
+      } else {
+        setError('Failed to send email. Please try again.');
+      }
+      
       setTimeout(() => {
         setShowForgotPassword(false);
         setResetEmail('');

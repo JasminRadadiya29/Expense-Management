@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import ChangePassword from './pages/ChangePassword';
 import AdminDashboard from './pages/AdminDashboard';
 import EmployeeExpenses from './pages/EmployeeExpenses';
 import ManagerDashboard from './pages/ManagerDashboard';
@@ -59,6 +60,11 @@ function App() {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/change-password" element={
+                <ProtectedRoute>
+                  <ChangePassword />
+                </ProtectedRoute>
+              } />
 
               <Route path="/" element={
                 <ProtectedRoute>

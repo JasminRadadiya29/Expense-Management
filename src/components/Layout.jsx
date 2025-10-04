@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, LayoutDashboard, Receipt, CheckSquare, Users, Settings } from 'lucide-react';
+import { LogOut, LayoutDashboard, Receipt, CheckSquare, Users, Settings, Key } from 'lucide-react';
 
 const Layout = () => {
   const { user, logout } = useAuth();
@@ -79,12 +79,22 @@ const Layout = () => {
                 <div className="text-xs text-slate-600">{user?.role}</div>
               </div>
 
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded transition"
-              >
-                <LogOut size={18} />
-              </button>
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/change-password"
+                  className="flex items-center gap-2 px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded transition"
+                  title="Change Password"
+                >
+                  <Key size={18} />
+                </Link>
+
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded transition"
+                >
+                  <LogOut size={18} />
+                </button>
+              </div>
             </div>
           </div>
         </div>

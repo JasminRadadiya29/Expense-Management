@@ -151,7 +151,8 @@ export const login = async (req, res) => {
         role: user.role,
         company: user.company,
         manager: user.manager,
-        currency: user.currency
+        currency: user.currency,
+        isTemporaryPassword: user.isTemporaryPassword
       }
     });
   } catch (error) {
@@ -171,15 +172,15 @@ export const forgotPassword = async (req, res) => {
 
     const temporaryPassword = generateTemporaryPassword();
     user.password = temporaryPassword;
+    user.isTemporaryPassword = true;
     await user.save();
 
-    const emailSent = await sendPasswordResetEmail(email, temporaryPassword);
-
-    if (emailSent) {
-      res.json({ message: 'Temporary password sent to your email' });
-    } else {
-      res.status(500).json({ error: 'Error sending email' });
-    }
+    // Return the temporary password so frontend can send email using EmailJS
+    res.json({ 
+      message: 'Password reset successful', 
+      temporaryPassword: temporaryPassword,
+      email: email 
+    });
   } catch (error) {
     console.error('Forgot password error:', error);
     res.status(500).json({ error: 'Error resetting password' });
@@ -214,6 +215,34 @@ export const refreshToken = async (req, res) => {
   }
 };
 
+export const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.userId;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await user.comparePassword(currentPassword);
+    if (!isCurrentPasswordValid) {
+      return res.status(400).json({ error: 'Current password is incorrect' });
+    }
+
+    // Update password
+    user.password = newPassword;
+    user.isTemporaryPassword = false;
+    await user.save();
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ error: 'Error changing password' });
+  }
+};
+
 export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.userId).populate('company').populate('manager', 'name email');
@@ -226,7 +255,8 @@ export const getMe = async (req, res) => {
         role: user.role,
         company: user.company,
         manager: user.manager,
-        currency: user.currency
+        currency: user.currency,
+        isTemporaryPassword: user.isTemporaryPassword
       }
     });
   } catch (error) {

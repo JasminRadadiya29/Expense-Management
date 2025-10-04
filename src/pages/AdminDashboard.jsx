@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Mail } from 'lucide-react';
 import api from '../services/api';
+import { sendWelcomeEmail, sendPasswordResetEmail } from '../services/emailService';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -45,7 +46,21 @@ const AdminDashboard = () => {
     setLoading(true);
 
     try {
-      await api.post('/users', formData);
+      const response = await api.post('/users', formData);
+      
+      // Send welcome email using EmailJS
+      const emailSent = await sendWelcomeEmail(
+        response.data.email,
+        response.data.userName,
+        response.data.temporaryPassword
+      );
+      
+      if (emailSent) {
+        alert('User created and welcome email sent successfully');
+      } else {
+        alert('User created but failed to send welcome email');
+      }
+      
       setShowModal(false);
       setFormData({ name: '', email: '', role: 'Employee', managerId: '', currency: '' });
       fetchUsers();
@@ -61,8 +76,19 @@ const AdminDashboard = () => {
     if (!confirm('Send password reset email to this user?')) return;
 
     try {
-      await api.post(`/users/${userId}/reset-password`);
-      alert('Password reset email sent');
+      const response = await api.post(`/users/${userId}/reset-password`);
+      
+      // Send password reset email using EmailJS
+      const emailSent = await sendPasswordResetEmail(
+        response.data.email,
+        response.data.temporaryPassword
+      );
+      
+      if (emailSent) {
+        alert('Password reset email sent successfully');
+      } else {
+        alert('Failed to send password reset email');
+      }
     } catch (err) {
       alert(err.response?.data?.error || 'Error sending reset email');
     }
@@ -117,13 +143,13 @@ const AdminDashboard = () => {
             </thead>
             <tbody className="divide-y divide-slate-200">
               {users.map((user) => (
-                <tr key={user.id} className="hover:bg-slate-50">
+                <tr key={user._id} className="hover:bg-slate-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">{user.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{user.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <select
                       value={user.role}
-                      onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                      onChange={(e) => handleRoleChange(user._id, e.target.value)}
                       className="text-sm border border-slate-300 rounded px-2 py-1"
                     >
                       <option value="Employee">Employee</option>
@@ -134,18 +160,18 @@ const AdminDashboard = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <select
                       value={user.manager?._id || ''}
-                      onChange={(e) => handleManagerChange(user.id, e.target.value)}
+                      onChange={(e) => handleManagerChange(user._id, e.target.value)}
                       className="text-sm border border-slate-300 rounded px-2 py-1"
                     >
                       <option value="">No Manager</option>
-                      {managers.filter(m => m.id !== user.id).map((manager) => (
-                        <option key={manager.id} value={manager.id}>{manager.name}</option>
+                      {managers.filter(m => m._id !== user._id).map((manager) => (
+                        <option key={manager._id} value={manager._id}>{manager.name}</option>
                       ))}
                     </select>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <button
-                      onClick={() => handleResetPassword(user.id)}
+                      onClick={() => handleResetPassword(user._id)}
                       className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
                     >
                       <Mail size={14} />
@@ -214,7 +240,7 @@ const AdminDashboard = () => {
                 >
                   <option value="">No Manager</option>
                   {managers.map((manager) => (
-                    <option key={manager.id} value={manager.id}>{manager.name}</option>
+                    <option key={manager._id} value={manager._id}>{manager.name}</option>
                   ))}
                 </select>
               </div>

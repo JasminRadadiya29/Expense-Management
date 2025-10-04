@@ -229,7 +229,7 @@ const ApprovalRules = () => {
                             size={4}
                           >
                             {managers.map((manager) => (
-                              <option key={manager.id} value={manager.id}>
+                              <option key={manager._id} value={manager._id}>
                                 {manager.name} ({manager.role})
                               </option>
                             ))}
@@ -279,7 +279,7 @@ const ApprovalRules = () => {
                               size={4}
                             >
                               {managers.map((manager) => (
-                                <option key={manager.id} value={manager.id}>
+                                <option key={manager._id} value={manager._id}>
                                   {manager.name} ({manager.role})
                                 </option>
                               ))}

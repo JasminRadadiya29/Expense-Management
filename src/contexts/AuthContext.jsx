@@ -39,6 +39,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(user));
     setToken(token);
     setUser(user);
+    return user;
   };
 
   const signup = async (name, email, password, confirmPassword, country) => {
@@ -70,6 +71,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const changePassword = async (currentPassword, newPassword) => {
+    const response = await api.post('/auth/change-password', {
+      currentPassword,
+      newPassword
+    });
+    return response.data;
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
@@ -79,7 +88,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, signup, logout, loading, refreshToken }}>
+    <AuthContext.Provider value={{ user, token, login, signup, logout, loading, refreshToken, changePassword }}>
       {children}
     </AuthContext.Provider>
   );

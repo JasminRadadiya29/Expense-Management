@@ -40,13 +40,17 @@ export const createUser = async (req, res) => {
       currency: currency || req.user.company.baseCurrency
     });
 
-    await sendPasswordResetEmail(email, temporaryPassword);
-
     const populatedUser = await User.findById(user._id)
       .populate('manager', 'name email')
       .select('-password');
 
-    res.status(201).json({ user: populatedUser });
+    // Return user data along with temporary password for frontend to send email
+    res.status(201).json({ 
+      user: populatedUser,
+      temporaryPassword: temporaryPassword,
+      email: email,
+      userName: name
+    });
   } catch (error) {
     console.error('Create user error:', error);
     res.status(500).json({ error: 'Error creating user' });
@@ -92,15 +96,16 @@ export const resetUserPassword = async (req, res) => {
 
     const temporaryPassword = generateTemporaryPassword();
     user.password = temporaryPassword;
+    user.isTemporaryPassword = true;
     await user.save();
 
-    const emailSent = await sendPasswordResetEmail(user.email, temporaryPassword);
-
-    if (emailSent) {
-      res.json({ message: 'Password reset email sent' });
-    } else {
-      res.status(500).json({ error: 'Error sending email' });
-    }
+    // Return the temporary password so frontend can send email using EmailJS
+    res.json({ 
+      message: 'Password reset successful', 
+      temporaryPassword: temporaryPassword,
+      email: user.email,
+      userName: user.name
+    });
   } catch (error) {
     console.error('Reset password error:', error);
     res.status(500).json({ error: 'Error resetting password' });
