@@ -67,16 +67,10 @@ const Layout = () => {
                 </NavLink>
               )}
 
-              {(user?.role === 'Manager' || user?.role === 'Admin') && (
-                <NavLink to="/approvals" icon={CheckSquare}>
-                  Approvals
-                </NavLink>
-              )}
-
               {user?.role === 'Admin' && (
                 <>
-                  <NavLink to="/users" icon={Users}>
-                    Users
+                  <NavLink to="/approvals" icon={CheckSquare}>
+                    Approvals
                   </NavLink>
                   <NavLink to="/approval-rules" icon={Settings}>
                     Rules
