@@ -41,14 +41,14 @@ const apiLimiter = createRateLimit(
 // Auth endpoints rate limit (stricter)
 const authLimiter = createRateLimit(
   15 * 60 * 1000, // 15 minutes
-  5, // limit each IP to 5 requests per windowMs
+  100, // limit each IP to 5 requests per windowMs
   'Too many authentication attempts, please try again later.'
 );
 
 // Password reset rate limit (very strict)
 const passwordResetLimiter = createRateLimit(
   60 * 60 * 1000, // 1 hour
-  3, // limit each IP to 3 requests per hour
+  100, // limit each IP to 3 requests per hour
   'Too many password reset attempts, please try again later.'
 );
 

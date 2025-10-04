@@ -7,15 +7,30 @@ const LoadingSpinner = ({
   className = '' 
 }) => {
   const sizeClasses = {
-    sm: 'h-4 w-4',
-    md: 'h-6 w-6',
-    lg: 'h-8 w-8'
+    sm: 'h-5 w-5',
+    md: 'h-7 w-7',
+    lg: 'h-10 w-10'
+  };
+
+  const textSizeClasses = {
+    sm: 'text-sm',
+    md: 'text-base',
+    lg: 'text-lg'
   };
 
   return (
-    <div className={`flex items-center justify-center gap-2 ${className}`}>
-      <Loader2 className={`animate-spin ${sizeClasses[size]}`} />
-      {text && <span className="text-slate-600">{text}</span>}
+    <div className={flex items-center justify-center gap-3 ${className}}>
+      <div className="relative">
+        {/* Outer glow ring */}
+        <div className={absolute inset-0 ${sizeClasses[size]} rounded-full bg-blue-400/20 blur-sm animate-pulse}></div>
+        {/* Spinning loader */}
+        <Loader2 className={relative ${sizeClasses[size]} text-blue-600 animate-spin} />
+      </div>
+      {text && (
+        <span className={font-medium text-slate-700 ${textSizeClasses[size]}}>
+          {text}
+        </span>
+      )}
     </div>
   );
 };
