@@ -112,7 +112,7 @@ const EmployeeExpenses = () => {
   const approvedExpenses = expenses.filter(e => e.status === 'Approved').length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen  bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
@@ -130,7 +130,7 @@ const EmployeeExpenses = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 mb-8">
           <div className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200/80 p-6 transition-all duration-300 hover:-translate-y-1">
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -176,20 +176,7 @@ const EmployeeExpenses = () => {
             </div>
           </div>
 
-          <div className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200/80 p-6 transition-all duration-300 hover:-translate-y-1">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">This Month</p>
-                <p className="text-4xl font-bold text-slate-900 mb-3">{totalExpenses.toFixed(2)}</p>
-                <div className="flex items-center gap-1.5 text-sm font-semibold text-blue-600">
-                  <span>October 2025</span>
-                </div>
-              </div>
-              <div className="p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <Calendar className="w-7 h-7 text-white" />
-              </div>
-            </div>
-          </div>
+          
         </div>
 
         <div className="bg-white rounded-2xl shadow-md border border-slate-200/80 overflow-hidden">
@@ -235,7 +222,7 @@ const EmployeeExpenses = () => {
                       </div>
                       {expense.currency !== user?.company.baseCurrency && (
                         <div className="text-xs text-slate-500 font-medium">
-                          (${expense.amountInBaseCurrency.toFixed(2)} {user?.company.baseCurrency})
+                          ({expense.amountInBaseCurrency.toFixed(2)} {user?.company.baseCurrency})
                         </div>
                       )}
                     </td>
@@ -387,7 +374,6 @@ const EmployeeExpenses = () => {
                     Amount <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">$</span>
                     <input
                       type="number"
                       step="0.01"
